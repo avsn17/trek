@@ -1,0 +1,105 @@
+cat << 'EOF' > index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sovereign Trek | Neural Matrix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #1DB954; --bg: #0c0c0c; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: white; overflow: hidden; }
+        .app-grid { display: grid; grid-template-columns: 380px 1fr; height: 100vh; gap: 20px; padding: 20px; box-sizing: border-box; }
+        .glass { background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; height: 100%; }
+        .chat-area { flex-grow: 1; overflow-y: auto; font-size: 13px; margin-bottom: 10px; line-height: 1.6; color: #888; }
+        .oracle-msg { color: var(--accent); font-weight: 800; display: block; margin-top: 12px; font-size: 10px; }
+        input { background: rgba(0,0,0,0.3); border: 1px solid #222; color: white; padding: 14px; border-radius: 12px; outline: none; width: 100%; box-sizing: border-box; }
+        .timer-big { font-size: 110px; font-weight: 800; letter-spacing: -6px; margin: 0; cursor: pointer; }
+        .dist-val { font-size: 64px; font-weight: 800; color: var(--accent); }
+        .mood-pill { font-size: 9px; padding: 4px 10px; border-radius: 10px; cursor: pointer; border: 1px solid #333; opacity: 0.5; }
+        .mood-pill.active { opacity: 1; border-color: var(--accent); color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="app-grid">
+        <div class="glass">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <div style="font-weight:800; font-size:10px; opacity:0.4;">ORACLE MATRIX</div>
+                <div style="display:flex; gap:5px;">
+                    <span id="m-sup" class="mood-pill active" onclick="setMood('supportive')">SUP</span>
+                    <span id="m-sar" class="mood-pill" onclick="setMood('sarcastic')">SAR</span>
+                    <span id="m-sto" class="mood-pill" onclick="setMood('stoic')">STO</span>
+                </div>
+            </div>
+            <div class="chat-area" id="chat-box"></div>
+            <input type="text" id="chat-input" placeholder="Inquire..." onkeypress="handleInput(event)">
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+            <div id="dist-ui" class="dist-val">0.0m</div>
+            <div id="timer-display" class="timer-big">25:00</div>
+            <div id="goal-text" style="font-size: 12px; font-weight: 800; opacity: 0.3; margin-top: 20px;">GOAL: 100m</div>
+        </div>
+    </div>
+
+    <script>
+        const banks = {
+            supportive: ["The path is clear if the mind is steady.", "Meters are climbing. You are doing well.", "Trust the process, trekker.", "Focus is a muscle. You are training it.", "1:1 physics is your friend today., "],
+            sarcastic: ["Oh, another inquiry? How productive.", "Are we trekking or just typing?", "The distance doesn't care about your ego.", "Cute goal. Try actually reaching it.", "Data suggests your focus is... oscillating."],
+            stoic: ["Logic dictates continued effort.", "Emotion is irrelevant to the 1:1 ratio.", "Distance = Time. This is the law.", "Output confirmed. Proceed.", "Observations recorded. No change in status."]
+        };
+
+        let currentMood = 'supportive';
+        let state = { active: false, time: 1500, totalSec: parseFloat(localStorage.getItem('trek_dist')) || 0 };
+
+        function setMood(m) {
+            currentMood = m;
+            document.querySelectorAll('.mood-pill').forEach(p => p.classList.remove('active'));
+            document.getElementById('m-' + m.substring(0,3)).classList.add('active');
+            const colors = { supportive: '#1DB954', sarcastic: '#ff4444', stoic: '#ffffff' };
+            document.documentElement.style.setProperty('--accent', colors[m]);
+            speak(`Personality matrix shifted to: ${m.toUpperCase()}`);
+        }
+
+        function speak(text) {
+            const box = document.getElementById('chat-box');
+            box.innerHTML += `<div><span class="oracle-msg">Oracle</span>${text}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function handleInput(e) {
+            if (e.key === 'Enter' && e.target.value.trim() !== "") {
+                const input = e.target.value;
+                e.target.value = '';
+                document.getElementById('chat-box').innerHTML += `<div><span style="color:#555;font-size:10px;font-weight:800;display:block;margin-top:10px;">You</span>${input}</div>`;
+                
+                setTimeout(() => {
+                    const bank = banks[currentMood];
+                    const randomLine = bank[Math.floor(Math.random() * bank.length)];
+                    speak(randomLine);
+                }, 400);
+            }
+        }
+
+        function render() {
+            document.getElementById('dist-ui').innerText = (state.totalSec / 60).toFixed(1) + 'm';
+            let m = Math.floor(state.time/60), s = state.time%60;
+            document.getElementById('timer-display').innerText = `${m}:${s<10?'0':''}${s}`;
+        }
+
+        setInterval(() => {
+            if(state.active && state.time > 0) {
+                state.time--; state.totalSec++;
+                localStorage.setItem('trek_dist', state.totalSec);
+                render();
+            }
+        }, 1000);
+
+        document.getElementById('timer-display').onclick = () => { 
+            state.active = !state.active;
+            speak(state.active ? "Trek Live." : "Trek Halted.");
+        };
+
+        window.onload = () => { speak("Neural Link established."); render(); };
+    </script>
+</body>
+</html>
+EOF
