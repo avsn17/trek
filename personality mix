@@ -40,17 +40,59 @@ cat << 'EOF' > index.html
         </div>
     </div>
 
-    <script>
-        const banks = {
-            supportive: ["The path is clear if the mind is steady.", "Meters are climbing. You are doing well.", "Trust the process, trekker.", "Focus is a muscle. You are training it.", "1:1 physics is your friend today., "],
-            sarcastic: ["Oh, another inquiry? How productive.", "Are we trekking or just typing?", "The distance doesn't care about your ego.", "Cute goal. Try actually reaching it.", "Data suggests your focus is... oscillating."],
-            stoic: ["Logic dictates continued effort.", "Emotion is irrelevant to the 1:1 ratio.", "Distance = Time. This is the law.", "Output confirmed. Proceed.", "Observations recorded. No change in status."]
-        };
+<script>
+    const banks = {
+        supportive: [
+            // Supportive
+            "The path is clear if the mind is steady.",
+            "Meters are climbing. You are doing well.",
+            "Trust the process, trekker.",
+            "Focus is a muscle. You are training it.",
+            "1:1 physics is your friend today.",
+            "Oh, another inquiry? How productive.",
+            "Are we trekking or just typing?",
+            "The distance doesn't care about your ego.",
+            "Cute goal. Try actually reaching it.",
+            "Data suggests your focus is... oscillating.",
+            "Logic dictates continued effort.",
+            "Emotion is irrelevant to the 1:1 ratio.",
+            "Distance = Time. This is the law.",
+            "Output confirmed. Proceed.",
+            "Observations recorded. No change in status.",
+            "The obstacle is the path; embrace it.",
+            "To move forward is to act in accordance with reason.",
+            "Every step is both small and infinite in meaning.",
+            "The journey itself is proof of perseverance.",
+            "Do not seek comfort; seek clarity and purpose.",
+            "Control what you can, accept what you cannot.",
+            "A calm mind yields clear vision.",
+            "Every challenge is a teacher in disguise.",
+            "The present moment is all we truly have.",
+            "Endurance reveals character, not circumstance.",
+            "Progress is quiet; recognition is optional.",
+            "Act with integrity; the rest is beyond control.",
+            "Pain is temporary, virtue is lasting.",
+            "Measure effort, not outcome.",
+            "The weight of the world is lighter for those who choose reason."
+        ]
+    };
 
-        let currentMood = 'supportive';
-        let state = { active: false, time: 1500, totalSec: parseFloat(localStorage.getItem('trek_dist')) || 0 };
+    let currentMood = 'supportive';
+    let state = {
+        active: false,
+        time: 1500,
+        totalSec: parseFloat(localStorage.getItem('trek_dist')) || 0
+    };
 
-        function setMood(m) {
+    function getMotivation() {
+        const bank = banks[currentMood];
+        return bank[Math.floor(Math.random() * bank.length)];
+    }
+
+    // Example usage:
+    console.log(getMotivation());
+</script>
+
             currentMood = m;
             document.querySelectorAll('.mood-pill').forEach(p => p.classList.remove('active'));
             document.getElementById('m-' + m.substring(0,3)).classList.add('active');
