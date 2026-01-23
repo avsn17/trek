@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sovereign Trek | 1:1 Ratio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0c0c0c; --panel: rgba(20, 20, 20, 0.9); --accent: #1DB954; --text: #ffffff; --gold: #FFD700; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text); overflow: hidden; transition: 0.5s; }
+        #canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; }
+        .app-grid { position: relative; z-index: 10; display: grid; grid-template-columns: 320px 1fr 340px; height: 100vh; padding: 20px; gap: 20px; box-sizing: border-box; pointer-events: none; }
+        .pointer { pointer-events: auto; }
+        .glass { background: var(--panel); backdrop-filter: blur(20px); border-radius: 16px; padding: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; }
+        .timer-big { font-size: 90px; font-weight: 800; letter-spacing: -5px; margin: 0; line-height: 1; }
+        .nav-btn { background: var(--panel); border: 1px solid var(--accent); color: var(--accent); padding: 8px 15px; border-radius: 20px; font-size: 10px; font-weight: 800; cursor: pointer; border: 1px solid var(--accent); }
+        .vibe-pill { padding: 8px; border-radius: 5px; font-size: 8px; font-weight: 800; text-align: center; cursor: pointer; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+        .vibe-pill.active { background: var(--accent); color: #000; }
+        #chat-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; color: white; outline: none; box-sizing: border-box; }
+        .chat-area { flex-grow: 1; overflow-y: auto; max-height: 350px; font-size: 13px; margin-bottom: 10px; line-height: 1.5; }
+        .oracle-tag { color: var(--accent); font-weight: 800; font-size: 10px; display: block; margin-top: 10px; }
+        .goal-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-top: 12px; overflow: hidden; position: relative; }
+        #goal-progress { width: 0%; height: 100%; background: var(--accent); transition: 0.4s ease-out; box-shadow: 0 0 15px var(--accent); }
+        #goal-progress.gold-mode { background: var(--gold); box-shadow: 0 0 20px var(--gold); }
+        iframe { display: none; }
+        body.widget-mode .app-grid { grid-template-columns: 1fr; justify-items: end; }
+        body.widget-mode .glass:not(.widget-target) { display: none; }
+        body.widget-mode .center-ui { display: none; }
+        body.widget-mode .widget-target { width: 320px; position: fixed; bottom: 20px; right: 20px; border: 1px solid var(--accent); }
+    </style>
+</head>
+<body>
+    <div style="position:fixed; top:20px; right:20px; z-index:100; display:flex; gap:10px;" class="pointer">
+        <button class="nav-btn" onclick="requestNotifications()" id="notif-btn">NOTIFICATIONS</button>
+        <button class="nav-btn" onclick="toggleWidget()">WIDGET</button>
+    </div>
+    <canvas id="canvas"></canvas>
+    <iframe id="audio-engine" src="https://www.youtube.com/embed/jfKfPfyJRdk?enablejsapi=1"></iframe>
+    <div class="app-grid">
+        <div class="pointer"><div class="glass">
+            <div style="font-size:10px; opacity:0.5; letter-spacing: 2px;">TREK DISTANCE</div>
+            <div id="dist-ui" style="font-size:32px; font-weight:800; color:var(--accent); margin: 5px 0;">0m</div>
+            <div style="font-size:10px; opacity:0.5; margin-top:10px;">PROGRESS TO <span id="goal-display" style="color:var(--accent)">100</span>m</div>
+            <div class="goal-bar"><div id="goal-progress"></div></div>
+            <div style="margin-top:15px;">
+                <label style="font-size: 9px; opacity: 0.6;">GOAL DISTANCE (METERS)</label>
+                <input type="number" id="goal-input-field" placeholder="e.g. 60 for 1hr work..." oninput="updateGoal(this.value)" style="background:rgba(255,255,255,0.05); border:1px solid #333; color:white; padding:8px; border-radius:6px; outline:none; font-size:12px; width:100%; box-sizing:border-box;">
+            </div>
+        </div></div>
+        <div class="center-ui" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div id="timer-display" class="timer-big">25:00</div>
+            <button onclick="toggleTrek()" id="main-btn" class="pointer" style="background:white; border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;">START TREK</button>
+        </div>
+        <div class="glass pointer widget-target">
+            <div style="font-weight:800; color:var(--accent); font-size:11px; margin-bottom:10px;">ORACLE GUIDE</div>
+            <div class="chat-area" id="chat-box"></div>
+            <input type="text" id="chat-input" placeholder="How's your trek going?" onkeypress="sendChat(event)">
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px;">
+                <div class="vibe-pill active" onclick="syncVibe('forest', this)">GROVE</div>
+                <div class="vibe-pill" onclick="syncVibe('cyber', this)">NEON</div>
+                <div class="vibe-pill" onclick="syncVibe('void', this)">VOID</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let state = { active: false, isBreak: false, time: 1500, totalSeconds: 0, goal: 100, theme: '#1DB954', notifiedGoal: false };
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let w, h;
+
+        const manual = `<div style="color:#888; font-size:11px; font-style:italic; border-left:2px solid #333; padding-left:10px; margin:10px 0;">
+            <b>1:1 Synchrony Guide:</b><br>
+            • Every <b>1 Minute</b> of focus = <b>1 Meter</b>.<br>
+            • 25m Pomodoro = 25 Meters.<br>
+            • 1 Hour Goal = 60 Meters.<br><br>
+            The progress bar turns <b>Gold</b> when you reach the final 20% of your hike.</div>`;
+
+        window.onload = () => {
+            const box = document.getElementById('chat-box');
+            box.innerHTML += `<span class="oracle-tag">ORACLE:</span>The 1:1 trail is open.` + manual;
+        };
+
+        function updateGoal(val) {
+            if(val && val > 0) {
+                state.goal = parseInt(val);
+                document.getElementById('goal-display').innerText = state.goal;
+                state.notifiedGoal = false; 
+                refreshProgressBar();
+            }
+        }
+
+        function refreshProgressBar() {
+            const distance = state.totalSeconds / 60;
+            const progress = (distance / state.goal) * 100;
+            const bar = document.getElementById('goal-progress');
+            bar.style.width = Math.min(progress, 100) + '%';
+            if (progress >= 80) bar.classList.add('gold-mode');
+            else bar.classList.remove('gold-mode');
+        }
+
+        function requestNotifications() {
+            Notification.requestPermission().then(perm => {
+                if(perm === 'granted') notify("Oracle Connected", "Physics: 1m per 1min. Steady pace.");
+            });
+        }
+
+        function notify(t, b) { if(Notification.permission === 'granted') new Notification(t, {body: b}); }
+        function toggleWidget() { document.body.classList.toggle('widget-mode'); }
+
+        function toggleTrek() { 
+            state.active = !state.active; 
+            document.getElementById('main-btn').innerText = state.active ? "HALT" : "RESUME";
+            document.getElementById('main-btn').style.background = state.active ? "#f23f42" : "white";
+            document.getElementById('main-btn').style.color = state.active ? "white" : "black";
+        }
+
+        function syncVibe(k, el) {
+            const themes = { forest: '#1DB954', cyber: '#a855f7', void: '#f8fafc' };
+            const yt = { forest: 'jfKfPfyJRdk', cyber: '5WUXNTPm-6A', void: '8v_4U_x1Hsk' };
+            state.theme = themes[k];
+            document.documentElement.style.setProperty('--accent', themes[k]);
+            document.querySelectorAll('.vibe-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('audio-engine').src = `https://www.youtube.com/embed/${yt[k]}?autoplay=1&enablejsapi=1`;
+        }
+
+        function sendChat(e) {
+            if(e.key === 'Enter' && e.target.value !== '') {
+                const box = document.getElementById('chat-box');
+                box.innerHTML += `<div><span style="color:#666; font-weight:800; font-size:10px;">YOU:</span> ${e.target.value}</div>`;
+                e.target.value = '';
+                setTimeout(() => {
+                    box.innerHTML += `<div><span class="oracle-tag">ORACLE:</span> Every second counts toward your meter.</div>`;
+                    box.scrollTop = box.scrollHeight;
+                }, 500);
+            }
+        }
+
+        setInterval(() => {
+            if(state.active && state.time > 0) {
+                state.time--; 
+                if(!state.isBreak) {
+                    state.totalSeconds++;
+                    refreshProgressBar();
+                }
+                let distance = state.totalSeconds / 60;
+                let m = Math.floor(state.time/60), s = state.time%60;
+                document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                document.getElementById('dist-ui').innerText = distance.toFixed(1) + 'm';
+                
+                if(distance >= state.goal && !state.notifiedGoal) {
+                    notify("Summit Reached!", `You have completed your ${state.goal}m trek!`);
+                    state.notifiedGoal = true;
+                }
+
+                if(state.time === 0) {
+                    state.active = false;
+                    notify(state.isBreak ? "Break Over" : "Rest Period", state.isBreak ? "Return to the trail." : "Time to breathe.");
+                    state.isBreak = !state.isBreak;
+                    state.time = state.isBreak ? 300 : 1500;
+                }
+            }
+        }, 1000);
+
+        function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+        window.onresize = resize; resize();
+
+        function animate() {
+            ctx.fillStyle = '#0c0c0c'; ctx.fillRect(0,0,w,h);
+            ctx.fillStyle = state.theme; ctx.globalAlpha = 0.12;
+            for(let i=0; i<40; i++) {
+                let x = (Math.sin(i + Date.now()*0.0006) * w/2) + w/2;
+                let y = (Math.cos(i + Date.now()*0.0003) * h/2) + h/2;
+                ctx.beginPath(); ctx.arc(x, y, 1.2, 0, Math.PI*2); ctx.fill();
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>
