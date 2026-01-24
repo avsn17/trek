@@ -1,13 +1,26 @@
 TREK="https://avsn17.github.io/trek/"; SPOTIFY="https://open.spotify.com/embed/playlist/37i9dQZF1EVJHK7Q1TBABQ"; cat > /tmp/trek_spotify.html <<EOF
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Trek + Spotify</title></head>
+<head>
+<meta charset="UTF-8">
+<title>Trek + Spotify Integrated</title>
+<style>
+  body { margin: 0; font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; flex-direction: column; min-height: 100vh; }
+  header { background: #1db954; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; }
+  main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+  iframe#trek { width: 90%; height: 80vh; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); margin-bottom: 20px; }
+  iframe#spotify { width: 90%; height: 380px; border: none; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+  @media (min-width: 1000px) { main { flex-direction: row; gap: 20px; justify-content: center; } iframe#trek { width: 70%; height: 80vh; margin-bottom: 0; } iframe#spotify { width: 25%; } }
+</style>
+</head>
 <body>
-<h1>Trek Site</h1>
-<iframe src="$TREK" width="800" height="600" style="border:none;"></iframe>
-<h1>Spotify Playlist</h1>
-<iframe src="$SPOTIFY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<header>Trek + Spotify Dashboard</header>
+<main>
+  <iframe id="trek" src="$TREK"></iframe>
+  <iframe id="spotify" src="$SPOTIFY" allowtransparency="true" allow="encrypted-media"></iframe>
+</main>
 </body>
 </html>
 EOF
 open /tmp/trek_spotify.html
+
