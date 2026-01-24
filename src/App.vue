@@ -1,35 +1,41 @@
 <script setup>
-import { useTimeout } from '@vueuse/core'
 import { ref } from 'vue'
-const timerOptions = ref([
-	{ label: 'Pomodoro', minutes: 25 },
-	{ label: 'Short Break', minutes: 5 },
-	{ label: 'Long Break', minutes: 15 },
-])
+import TrekDistance from './components/TrekDistance.vue'
+import OracleChat from './components/OracleChat.vue'
+import NavigationComponent from './components/NavigationComponent.vue'
 
-const limit = ref(0)
-const completed = ref(false)
+const widgetMode = ref(false)
+const timeRemaining = ref(25 * 60)
 
-const { counter, reset, pause, resume } = useIntervalFn(() => {
-	if (counter >= limit.value * 60) {
-		completed.value = true
-		pause()
-	}
-}, 1000)
+const formatTime = (seconds) => {
+	const mins = Math.floor(seconds / 60).toString().padStart(2, '0')
+	const secs = (seconds % 60).toString().padStart(2, '0')
+	return `${mins}:${secs}`
+}
+
 </script>
 
 <template>
-	<h1 class="text-3xl font-bold underline">
-		Hello world!
-	</h1>
+	<NavigationComponent />
 
-	<div>
-		{{ counter }}
+	<div class="app-grid">
+		<TrekDistance />
+		<div class="center-ui" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+			<div id="timer-display" class="timer-big">{{ formatTime(timeRemaining) }}</div>
+			<button id="main-btn" class="pointer"
+				style="background:white; border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;">START
+				TREK</button>
+			<button id="reset-btn" class="pointer"
+				style="background:white; border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;">RESET
+				TREK</button>
+		</div>
+		<OracleChat />
 	</div>
+
 
 </template>
 
-<style scoped>
+<style>
 :root {
 	--bg: #0c0c0c;
 	--panel: rgba(20, 20, 20, 0.9);
@@ -38,11 +44,14 @@ const { counter, reset, pause, resume } = useIntervalFn(() => {
 	--gold: #FFD700;
 }
 
+
+html,
 body,
-html {
+#app {
 	margin: 0;
 	padding: 0;
-	width: 100%;
+	width: 100vw;
+	max-width: 100vw;
 	height: 100%;
 	font-family: 'Plus Jakarta Sans', sans-serif;
 	color: var(--text);
@@ -50,22 +59,15 @@ html {
 	transition: 0.5s;
 }
 
-#canvas {
-	position: fixed;
-	top: 0;
-	left: 0;
-	z-index: 1;
-	pointer-events: none;
-}
-
 .app-grid {
 	position: relative;
 	z-index: 10;
-	display: grid;
-	grid-template-columns: 320px 1fr 340px;
-	height: 100vh;
-	padding: 20px;
-	gap: 20px;
+	width: 100vw;
+	padding: 10px 20px;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: stretch;
 	box-sizing: border-box;
 	pointer-events: none;
 }
@@ -91,18 +93,6 @@ html {
 	letter-spacing: -5px;
 	margin: 0;
 	line-height: 1;
-}
-
-.nav-btn {
-	background: var(--panel);
-	border: 1px solid var(--accent);
-	color: var(--accent);
-	padding: 8px 15px;
-	border-radius: 20px;
-	font-size: 10px;
-	font-weight: 800;
-	cursor: pointer;
-	border: 1px solid var(--accent);
 }
 
 .vibe-pill {
@@ -149,28 +139,6 @@ html {
 	margin-top: 10px;
 }
 
-.goal-bar {
-	width: 100%;
-	height: 6px;
-	background: rgba(255, 255, 255, 0.05);
-	border-radius: 10px;
-	margin-top: 12px;
-	overflow: hidden;
-	position: relative;
-}
-
-#goal-progress {
-	width: 0%;
-	height: 100%;
-	background: var(--accent);
-	transition: 0.4s ease-out;
-	box-shadow: 0 0 15px var(--accent);
-}
-
-#goal-progress.gold-mode {
-	background: var(--gold);
-	box-shadow: 0 0 20px var(--gold);
-}
 
 iframe {
 	display: none;
@@ -185,20 +153,20 @@ iframe {
 	z-index: -1;
 }
 
-body.widget-mode .app-grid {
+#app.widget-mode .app-grid {
 	grid-template-columns: 1fr;
 	justify-items: end;
 }
 
-body.widget-mode .glass:not(.widget-target) {
+#app.widget-mode .glass:not(.widget-target) {
 	display: none;
 }
 
-body.widget-mode .center-ui {
+#app.widget-mode .center-ui {
 	display: none;
 }
 
-body.widget-mode .widget-target {
+#app.widget-mode .widget-target {
 	width: 320px;
 	position: fixed;
 	bottom: 20px;
