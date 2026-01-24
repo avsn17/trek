@@ -1,13 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import TrekDistance from './components/TrekDistance.vue'
 import OracleChat from './components/OracleChat.vue'
 import NavigationComponent from './components/NavigationComponent.vue'
 import BgStars from './components/BgStars.vue'
 import { useIntervalFn } from '@vueuse/core'
 
-const widgetMode = ref(false)
-const timeRemaining = ref(25 * 60)
+const timeLimit = ref(25 * 60)
+const timeCount = ref(0)
 
 const formatTime = (seconds) => {
 	const mins = Math.floor(seconds / 60).toString().padStart(2, '0')
@@ -18,8 +18,8 @@ const formatTime = (seconds) => {
 const completed = ref(false)
 
 const { pause, resume, isActive } = useIntervalFn(() => {
-	if (timeRemaining.value > 0) {
-		timeRemaining.value--
+	if (timeLimit.value > timeCount.value) {
+		timeCount.value += 1
 	} else {
 		completed.value = true
 		pause()
@@ -28,9 +28,12 @@ const { pause, resume, isActive } = useIntervalFn(() => {
 
 const resetState = () => {
 	pause()
-	timeRemaining.value = 25 * 60
+	timeCount.value = 0
 	completed.value = false
 };
+
+const timeFormat = computed(() => formatTime(timeLimit.value - timeCount.value));
+
 
 </script>
 
@@ -39,15 +42,14 @@ const resetState = () => {
 	<NavigationComponent />
 
 	<div class="app-grid">
-		<TrekDistance />
+		<TrekDistance :timeRem="timeCount" />
 		<div class="center-ui" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
-			<div id="timer-display" class="timer-big">{{ formatTime(timeRemaining) }}</div>
+			<div id="timer-display" class="timer-big">{{ timeFormat }}</div>
 
 			<button id="main-btn" class="pointer"
 				style=" border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;"
 				:style="{ background: isActive ? '#f23f42' : 'white', color: isActive ? 'white' : 'black' }"
-				@click="isActive ? pause() : resume()">START
-				TREK</button>
+				@click="isActive ? pause() : resume()">{{ isActive ? "STOP TREK" : "START TREK" }}</button>
 			<button id="reset-btn" class="pointer" @click="resetState"
 				style="background:white; border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;">RESET
 				TREK</button>
