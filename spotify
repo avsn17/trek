@@ -123,6 +123,21 @@
       document.getElementById('yt-frame').src =
         'https://www.youtube.com/embed/ktvTqknDobU';
     }
+<button onclick="playYT()">Play YouTube Music</button>
+
+<iframe
+  id="yt"
+  width="360"
+  height="215"
+  allow="autoplay; encrypted-media"
+></iframe>
+
+<script>
+function playYT() {
+  document.getElementById('yt').src =
+    'https://www.youtube.com/embed/ktvTqknDobU?autoplay=1';
+}
+
   </script>
 
 </body>
