@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import TrekDistance from './components/TrekDistance.vue'
 import OracleChat from './components/OracleChat.vue'
 import NavigationComponent from './components/NavigationComponent.vue'
+import BgStars from './components/BgStars.vue'
+import { useIntervalFn } from '@vueuse/core'
 
 const widgetMode = ref(false)
 const timeRemaining = ref(25 * 60)
@@ -13,19 +15,40 @@ const formatTime = (seconds) => {
 	return `${mins}:${secs}`
 }
 
+const completed = ref(false)
+
+const { pause, resume, isActive } = useIntervalFn(() => {
+	if (timeRemaining.value > 0) {
+		timeRemaining.value--
+	} else {
+		completed.value = true
+		pause()
+	}
+}, 1000, { immediate: false, controls: true })
+
+const resetState = () => {
+	pause()
+	timeRemaining.value = 25 * 60
+	completed.value = false
+};
+
 </script>
 
 <template>
+	<BgStars />
 	<NavigationComponent />
 
 	<div class="app-grid">
 		<TrekDistance />
 		<div class="center-ui" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
 			<div id="timer-display" class="timer-big">{{ formatTime(timeRemaining) }}</div>
+
 			<button id="main-btn" class="pointer"
-				style="background:white; border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;">START
+				style=" border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;"
+				:style="{ background: isActive ? '#f23f42' : 'white', color: isActive ? 'white' : 'black' }"
+				@click="isActive ? pause() : resume()">START
 				TREK</button>
-			<button id="reset-btn" class="pointer"
+			<button id="reset-btn" class="pointer" @click="resetState"
 				style="background:white; border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;">RESET
 				TREK</button>
 		</div>
@@ -37,7 +60,6 @@ const formatTime = (seconds) => {
 
 <style>
 :root {
-	--bg: #0c0c0c;
 	--panel: rgba(20, 20, 20, 0.9);
 	--accent: #1DB954;
 	--text: #ffffff;
@@ -144,14 +166,7 @@ iframe {
 	display: none;
 }
 
-#glcanvas {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100vw;
-	height: 100vh;
-	z-index: -1;
-}
+
 
 #app.widget-mode .app-grid {
 	grid-template-columns: 1fr;
