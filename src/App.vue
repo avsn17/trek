@@ -1,40 +1,54 @@
 <script setup>
-import { computed, ref } from 'vue'
-import TrekDistance from './components/TrekDistance.vue'
-import OracleChat from './components/OracleChat.vue'
-import NavigationComponent from './components/NavigationComponent.vue'
-import BgStars from './components/BgStars.vue'
-import { useIntervalFn } from '@vueuse/core'
+import { computed, ref } from "vue";
+import TrekDistance from "./components/TrekDistance.vue";
+import OracleChat from "./components/OracleChat.vue";
+import NavigationComponent from "./components/NavigationComponent.vue";
+import BgStars from "./components/BgStars.vue";
+import { useIntervalFn } from "@vueuse/core";
 
-const timeLimit = ref(25 * 60)
-const timeCount = ref(0)
+import TimeControlSelector from "./components/TimeControlSelector.vue";
+
+const timeLimit = ref(25 * 60);
+const timeCount = ref(0);
 
 const formatTime = (seconds) => {
-	const mins = Math.floor(seconds / 60).toString().padStart(2, '0')
-	const secs = (seconds % 60).toString().padStart(2, '0')
-	return `${mins}:${secs}`
-}
-
-const completed = ref(false)
-
-const { pause, resume, isActive } = useIntervalFn(() => {
-	if (timeLimit.value > timeCount.value) {
-		timeCount.value += 1
-	} else {
-		completed.value = true
-		pause()
-	}
-}, 1000, { immediate: false, controls: true })
-
-const resetState = () => {
-	pause()
-	timeCount.value = 0
-	completed.value = false
+	const mins = Math.floor(seconds / 60)
+		.toString()
+		.padStart(2, "0");
+	const secs = (seconds % 60).toString().padStart(2, "0");
+	return `${mins}:${secs}`;
 };
 
-const timeFormat = computed(() => formatTime(timeLimit.value - timeCount.value));
+const handleSetTimer = (newTime) => {
+	timeLimit.value = newTime;
+	timeCount.value = 0;
+	completed.value = false;
+};
 
+const completed = ref(false);
 
+const { pause, resume, isActive } = useIntervalFn(
+	() => {
+		if (timeLimit.value > timeCount.value) {
+			timeCount.value += 1;
+		} else {
+			completed.value = true;
+			pause();
+		}
+	},
+	1000,
+	{ immediate: false, controls: true },
+);
+
+const resetState = () => {
+	pause();
+	timeCount.value = 0;
+	completed.value = false;
+};
+
+const timeFormat = computed(() =>
+	formatTime(timeLimit.value - timeCount.value),
+);
 </script>
 
 <template>
@@ -43,31 +57,51 @@ const timeFormat = computed(() => formatTime(timeLimit.value - timeCount.value))
 
 	<div class="app-grid">
 		<TrekDistance :timeRem="timeCount" />
-		<div class="center-ui" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+		<div class="center-ui" style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      ">
 			<div id="timer-display" class="timer-big">{{ timeFormat }}</div>
 
-			<button id="main-btn" class="pointer"
-				style=" border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;"
-				:style="{ background: isActive ? '#f23f42' : 'white', color: isActive ? 'white' : 'black' }"
-				@click="isActive ? pause() : resume()">{{ isActive ? "STOP TREK" : "START TREK" }}</button>
-			<button id="reset-btn" class="pointer" @click="resetState"
-				style="background:white; border:none; padding:15px 50px; border-radius:40px; font-weight:800; cursor:pointer; margin-top:30px;">RESET
-				TREK</button>
+			<button id="main-btn" class="pointer" style="
+          border: none;
+          padding: 15px 50px;
+          border-radius: 40px;
+          font-weight: 800;
+          cursor: pointer;
+          margin-top: 30px;
+        " :style="{
+			background: isActive ? '#f23f42' : 'white',
+			color: isActive ? 'white' : 'black',
+		}" @click="isActive ? pause() : resume()">
+				{{ isActive ? "STOP TREK" : "START TREK" }}
+			</button>
+			<button id="reset-btn" class="pointer" @click="resetState" style="
+          background: white;
+          border: none;
+          padding: 15px 50px;
+          border-radius: 40px;
+          font-weight: 800;
+          cursor: pointer;
+          margin-top: 30px;
+        ">
+				RESET TREK
+			</button>
+			<TimeControlSelector @set-timer="handleSetTimer" :isActive="isActive" />
 		</div>
 		<OracleChat />
 	</div>
-
-
 </template>
 
 <style>
 :root {
 	--panel: rgba(20, 20, 20, 0.9);
-	--accent: #1DB954;
+	--accent: #1db954;
 	--text: #ffffff;
-	--gold: #FFD700;
+	--gold: #ffd700;
 }
-
 
 html,
 body,
@@ -77,7 +111,7 @@ body,
 	width: 100vw;
 	max-width: 100vw;
 	height: 100%;
-	font-family: 'Plus Jakarta Sans', sans-serif;
+	font-family: "Plus Jakarta Sans", sans-serif;
 	color: var(--text);
 	overflow: hidden;
 	transition: 0.5s;
@@ -85,7 +119,6 @@ body,
 
 .app-grid {
 	position: relative;
-	z-index: 10;
 	width: 100vw;
 	padding: 10px 20px;
 	display: flex;
@@ -112,27 +145,26 @@ body,
 }
 
 .timer-big {
-	font-size: 90px;
 	font-weight: 800;
-	letter-spacing: -5px;
 	margin: 0;
 	line-height: 1;
 }
 
-.vibe-pill {
-	padding: 8px;
-	border-radius: 5px;
-	font-size: 8px;
-	font-weight: 800;
-	text-align: center;
-	cursor: pointer;
-	background: rgba(0, 0, 0, 0.3);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+#timer-display {
+	font-size: 90px;
+	letter-spacing: -5px;
 }
 
-.vibe-pill.active {
-	background: var(--accent);
-	color: #000;
+
+.input-class {
+	width: 50%;
+	background: rgba(0, 0, 0, 0.5);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	padding: 12px;
+	border-radius: 8px;
+	color: white;
+	outline: none;
+	box-sizing: border-box;
 }
 
 #chat-input {
@@ -163,12 +195,9 @@ body,
 	margin-top: 10px;
 }
 
-
 iframe {
 	display: none;
 }
-
-
 
 #app.widget-mode .app-grid {
 	grid-template-columns: 1fr;
