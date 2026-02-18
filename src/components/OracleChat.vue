@@ -55,7 +55,7 @@ const handleKeyPress = (event) => {
 					<span style="color:#666; font-weight:800; font-size:10px;">YOU:</span> {{ message.content }}
 				</div>
 				<div v-else class="oracle-message">
-					<span class="oracle-tag">ORACLE:</span> {{ message.content }}
+					<span class="oracle-tag">UNCLE IRO:</span> {{ message.content }}
 				</div>
 			</div>
 		</div>
